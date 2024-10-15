@@ -1,62 +1,3 @@
-# Step through website login
-# Name -> Password
-# Enter
-
-## AND THEN ##
-
-# Click on Reports
-# Click on Database Maintanence
-# Click on Jpegs Unnamed
-# Start on the bottom....(CAN WE DIFFERATE BETWEEN TOP MIDDLE AND BOTTOM? AKA IDENTIFIERS)
-
-#EXAMPLE html markup
-# <a href="person_media?id=15078"> Cristalyn Valdez-Montoya &amp;  Ricardo Valdez- Montoya</a>
-##   ##
-
-
-# Features to have
-# Confirm each step through?
-# Confirm each change to ID? ie shows me the picture?
-# Maybe with different choices -> "ID" , "Proof", "Citation", "Investigation", "christmas-picture"
-
-
-# Needs to idenitify between JPG and PDF
-
-
-# Delete duplicate IDs if need? 
-# How do i implement that
-
-
-# Questions -> 
-# 1) It seems like Changing to ID triggers an event to remove
-# person from list
-# How does it remove them and what causes it not to?
-# ie the 5-6 people at top of list
-
-
-# 2) At top of list: 
-# Jpegs should have names like "ID", "Proof", "Citation"
-# Is this something that needs to be included in program?
-
-# Code in JPEG'S report
-
-# select o.id, '<b><a href="person_media?id=' || o.ID::varchar || '">' || o.OwnerName || '</a><br />' ||
-# o.OwnerAddress
-# from owner o
-# join media m on m.LinkID=o.ID and m.LinkTypeID=3 and m.MediaMimeType like '%jpeg%' and m.MediaNotes not like '%ID%'
-# and m.MediaNotes not like '%id.%' and m.MediaNotes not like '%Proof%' 
-# and m.medianotes not like '%Citation%' and m.MediaNotes not like '%Investigation%' and m.MediaNotes not like '%christmas-picture%'
-# and m.MediaSize>0
-# and o.id not in (46216,46216)
-# group by o.ID
-# order by Max(m.CreatedDate)
-# limit 200
-
-
-
-
-#If Rabies cert-> make it into PDF file and label it animalName-rabies-year
-#If App jpeg already have App pdf, delete the jpeg
 
 
 ##//##
@@ -144,3 +85,71 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+##pseudocode
+# Step through website login
+# Name -> Password
+# Enter
+
+## AND THEN ##
+
+# Click on Reports
+# Click on Database Maintanence
+# Click on Jpegs Unnamed
+# Start on the bottom....(CAN WE DIFFERATE BETWEEN TOP MIDDLE AND BOTTOM? AKA IDENTIFIERS)
+
+#EXAMPLE html markup
+# <a href="person_media?id=15078"> Cristalyn Valdez-Montoya &amp;  Ricardo Valdez- Montoya</a>
+##   ##
+
+
+# Features to have
+# Confirm each step through?
+# Confirm each change to ID? ie shows me the picture?
+# Maybe with different choices -> "ID" , "Proof", "Citation", "Investigation", "christmas-picture"
+
+
+# Needs to idenitify between JPG and PDF
+
+
+# Delete duplicate IDs if need? 
+# How do i implement that
+
+
+# Questions -> 
+# 1) It seems like Changing to ID triggers an event to remove
+# person from list
+# How does it remove them and what causes it not to?
+# ie the 5-6 people at top of list
+
+
+# 2) At top of list: 
+# Jpegs should have names like "ID", "Proof", "Citation"
+# Is this something that needs to be included in program?
+
+# Code in JPEG'S report
+
+# select o.id, '<b><a href="person_media?id=' || o.ID::varchar || '">' || o.OwnerName || '</a><br />' ||
+# o.OwnerAddress
+# from owner o
+# join media m on m.LinkID=o.ID and m.LinkTypeID=3 and m.MediaMimeType like '%jpeg%' and m.MediaNotes not like '%ID%'
+# and m.MediaNotes not like '%id.%' and m.MediaNotes not like '%Proof%' 
+# and m.medianotes not like '%Citation%' and m.MediaNotes not like '%Investigation%' and m.MediaNotes not like '%christmas-picture%'
+# and m.MediaSize>0
+# and o.id not in (46216,46216)
+# group by o.ID
+# order by Max(m.CreatedDate)
+# limit 200
+
+
+
+
+#If Rabies cert-> make it into PDF file and label it animalName-rabies-year
+#If App jpeg already have App pdf, delete the jpeg
+
