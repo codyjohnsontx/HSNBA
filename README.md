@@ -1,4 +1,4 @@
-# ShelterManager JPEG Maintenance Automation
+# HSNBA Maintenance Automation
 
 This project automates tasks on the ShelterManager website using Selenium, a web automation framework for Python. The script logs into the ShelterManager system, navigates through the menus to access the "Jpegs Unnamed" report, and performs actions such as selecting names from the list and renaming them based on the Assistant Director's preferences—whether it's "ID," "Investigation Photos," "Rabies Certs," or other specified labels. The goal is to leverage automation to reduce the workload and time spent on data entry, enabling team members to focus on more important tasks such as animal care and adoption inquiries
 
@@ -26,3 +26,4 @@ The short-term goal is to refine this program and make it versatile enough to au
    ```bash
    git clone https://github.com/your-username/sheltermanager-jpeg-maintenance.git
    cd sheltermanager-jpeg-maintenance
+   ```
