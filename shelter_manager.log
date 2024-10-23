@@ -1,0 +1,53 @@
+2024-10-23 13:06:45,307 - INFO - Attempting to log in to ShelterManager
+2024-10-23 13:06:46,984 - INFO - Successfully logged in
+2024-10-23 13:06:46,984 - INFO - Navigating to Jpegs Unnamed section
+2024-10-23 13:06:48,454 - INFO - Successfully navigated to Jpegs Unnamed
+2024-10-23 13:06:48,471 - INFO - Processing entry 1/200: Art & Andrea Bobadilla
+2024-10-23 13:06:49,925 - ERROR - Error processing JPEG: Message: element not interactable
+  (Session info: chrome=130.0.6723.59)
+Stacktrace:
+0   chromedriver                        0x0000000102f03634 cxxbridge1$str$ptr + 3645404
+1   chromedriver                        0x0000000102efbe94 cxxbridge1$str$ptr + 3614780
+2   chromedriver                        0x0000000102967f74 cxxbridge1$string$len + 88016
+3   chromedriver                        0x00000001029ab2b4 cxxbridge1$string$len + 363280
+4   chromedriver                        0x00000001029a0e14 cxxbridge1$string$len + 321136
+5   chromedriver                        0x00000001029a08b0 cxxbridge1$string$len + 319756
+6   chromedriver                        0x00000001029e3bd0 cxxbridge1$string$len + 594988
+7   chromedriver                        0x000000010299ef54 cxxbridge1$string$len + 313264
+8   chromedriver                        0x000000010299fba4 cxxbridge1$string$len + 316416
+9   chromedriver                        0x0000000102ece1d4 cxxbridge1$str$ptr + 3427196
+10  chromedriver                        0x0000000102ed1518 cxxbridge1$str$ptr + 3440320
+11  chromedriver                        0x0000000102eb55f8 cxxbridge1$str$ptr + 3325856
+12  chromedriver                        0x0000000102ed1ddc cxxbridge1$str$ptr + 3442564
+13  chromedriver                        0x0000000102ea687c cxxbridge1$str$ptr + 3265060
+14  chromedriver                        0x0000000102eec884 cxxbridge1$str$ptr + 3551788
+15  chromedriver                        0x0000000102eeca00 cxxbridge1$str$ptr + 3552168
+16  chromedriver                        0x0000000102efbb2c cxxbridge1$str$ptr + 3613908
+17  libsystem_pthread.dylib             0x0000000181bf606c _pthread_start + 148
+18  libsystem_pthread.dylib             0x0000000181bf0e2c thread_start + 8
+
+2024-10-23 13:07:00,362 - ERROR - Error navigating back: Message: 
+Stacktrace:
+0   chromedriver                        0x0000000102f03634 cxxbridge1$str$ptr + 3645404
+1   chromedriver                        0x0000000102efbe94 cxxbridge1$str$ptr + 3614780
+2   chromedriver                        0x0000000102968104 cxxbridge1$string$len + 88416
+3   chromedriver                        0x00000001029aa364 cxxbridge1$string$len + 359360
+4   chromedriver                        0x00000001029e3bd0 cxxbridge1$string$len + 594988
+5   chromedriver                        0x000000010299ef54 cxxbridge1$string$len + 313264
+6   chromedriver                        0x000000010299fba4 cxxbridge1$string$len + 316416
+7   chromedriver                        0x0000000102ece1d4 cxxbridge1$str$ptr + 3427196
+8   chromedriver                        0x0000000102ed1518 cxxbridge1$str$ptr + 3440320
+9   chromedriver                        0x0000000102eb55f8 cxxbridge1$str$ptr + 3325856
+10  chromedriver                        0x0000000102ed1ddc cxxbridge1$str$ptr + 3442564
+11  chromedriver                        0x0000000102ea687c cxxbridge1$str$ptr + 3265060
+12  chromedriver                        0x0000000102eec884 cxxbridge1$str$ptr + 3551788
+13  chromedriver                        0x0000000102eeca00 cxxbridge1$str$ptr + 3552168
+14  chromedriver                        0x0000000102efbb2c cxxbridge1$str$ptr + 3613908
+15  libsystem_pthread.dylib             0x0000000181bf606c _pthread_start + 148
+16  libsystem_pthread.dylib             0x0000000181bf0e2c thread_start + 8
+
+2024-10-23 13:07:00,363 - INFO - No JPEG found or processing failed for entry: Art & Andrea Bobadilla
+2024-10-23 13:14:43,223 - WARNING - Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x103dd4550>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/58caa176bcc45056d5fe257607310234
+2024-10-23 13:14:43,227 - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x103dd4890>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/58caa176bcc45056d5fe257607310234
+2024-10-23 13:14:43,228 - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<urllib3.connection.HTTPConnection object at 0x103dd7250>: Failed to establish a new connection: [Errno 61] Connection refused')': /session/58caa176bcc45056d5fe257607310234
+2024-10-23 13:14:43,242 - INFO - Browser closed successfully

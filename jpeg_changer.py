@@ -3,176 +3,309 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException
 from dotenv import load_dotenv
 import os
 import logging
 
-# Load environment variables from .env file
+# Load environment variables and setup logging
 load_dotenv()
+logging.basicConfig(level=logging.INFO,
+                   format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-
-def login(driver, username, password):
-    logging.info("Logging in to the ShelterManager website.")
-    sm_account_field = driver.find_element(By.ID, "smaccount")
-    username_field = driver.find_element(By.ID, "username")
-    password_field = driver.find_element(By.ID, "password")
-    login_button = driver.find_element(By.ID, "login")
-
-    sm_account_field.send_keys('hsnba')
-    username_field.send_keys(username)
-    password_field.send_keys(password)
-    login_button.click()
-
-    time.sleep(3)
-
-def navigate_to_jpegs_unnamed(driver):
-    logging.info("Navigating to Jpegs Unnamed.")
-    
-    WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.ID, "asm-menu-reports"))
-    ).click()
-    time.sleep(3)
-
-    WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.ID, "ui-id-15"))
-    ).click()
-    time.sleep(3)
-
-    WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.LINK_TEXT, "Jpegs Unnamed"))
-    ).click()
-    time.sleep(3)
-
-def click_last_entry(driver):
-    logging.info("Clicking on the last entry in the Jpegs Unnamed list.")
-    
-    # Wait for the table to load and find the last row
-    rows = driver.find_elements(By.XPATH, "//table/tbody/tr")
-    if rows:
-        last_row = rows[-1]
-        last_entry = last_row.find_element(By.XPATH, "./td[2]/b/a")
-        last_entry.click()
-        time.sleep(3)
-        return True
-    else:
-        logging.info("No entries found in the list.")
-        return False
-
-def process_single_jpeg(driver):
-    logging.info("Checking if there is a single JPEG on the page.")
-    
-    # Wait for elements with the class "link-edit" to be present
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CLASS_NAME, "link-edit"))
-    )
-    
-    # Find all media links with the class "link-edit"
-    media_links = driver.find_elements(By.CLASS_NAME, "link-edit")
-    
-    if media_links:
-        try:
-            # Scroll the element into view before clicking
-            driver.execute_script("arguments[0].scrollIntoView(true);", media_links[0])
-            time.sleep(1)  # Small delay to ensure it's in view
-            
-            # Make sure the element is clickable
-            WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.CLASS_NAME, "link-edit"))
-            )
-            
-            # Click the first "link-edit" element to go to the media details
-            media_links[0].click()
-            time.sleep(3)
-            
-            logging.info("Clicked on the media link to check if it's a JPEG.")
-        except Exception as e:
-            logging.error(f"Could not interact with the media link: {e}")
-            return
-    else:
-        logging.info("No media links found.")
-        return
-    
-    # Now check if the file is a JPEG by looking at the text box content
-    try:
-        name_field = driver.find_element(By.XPATH, "//input[@name='mediaName']")
-        media_name = name_field.get_attribute("value").lower()
-        
-        if media_name.endswith(".jpg") or media_name.endswith(".jpeg"):
-            logging.info("Single JPEG found, renaming to 'ID'.")
-            try:
-                # Rename the JPEG to "ID"
-                name_field.clear()
-                name_field.send_keys("ID")
-                
-                # Click the "Change" button to save the changes
-                change_button = driver.find_element(By.XPATH, "//button[contains(@class, 'asm-dialog-actionbutton')]")
-                change_button.click()
-                logging.info("Renamed the JPEG to 'ID' and clicked the 'Change' button.")
-            except Exception as e:
-                logging.error(f"Could not rename the JPEG: {e}")
-            time.sleep(3)
-        else:
-            logging.info("The file is not a JPEG. No action taken.")
-    except Exception as e:
-        logging.error(f"Error checking the file type: {e}")
-
-    # Go back to the previous page
-    driver.back()
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CLASS_NAME, "link-edit"))
-    )
-    time.sleep(3)
-
-
-
-def main():
+def setup_driver():
+    """Set up and return the Chrome WebDriver."""
     options = webdriver.ChromeOptions()
     options.add_argument('--disable-gpu')
+    return webdriver.Chrome(options=options)
 
-    driver = webdriver.Chrome(options=options)
+def wait_for_input():
+    """Wait for user input with clear prompt."""
+    print("\nWhat would you like to do?")
+    print("1: Rename to ID (for driver's license JPGs)")
+    print("2: Skip this item")
+    print("3: Go to next entry")
+    print("4: Quit program")
+    while True:
+        try:
+            choice = input("Choice (1-4): ").strip()
+            if choice in ['1', '2', '3', '4']:
+                return choice
+            print("Invalid choice, please enter 1-4")
+        except Exception:
+            print("Invalid input, please try again")
 
+def login(driver, username, password):
+    """Log in to ShelterManager."""
     try:
+        logging.info("Attempting to log in...")
         driver.get("https://service.sheltermanager.com/asmlogin")
-        driver.implicitly_wait(2.0)
+        time.sleep(0.5)  # Reduced wait after page load
 
+        # Fill in login details
+        driver.find_element(By.ID, "smaccount").send_keys('hsnba')
+        driver.find_element(By.ID, "username").send_keys(username)
+        driver.find_element(By.ID, "password").send_keys(password)
+        driver.find_element(By.ID, "login").click()
+        
+        # Wait for login to complete (keep this at 10 as it's network dependent)
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "asm-menu-reports"))
+        )
+        logging.info("Login successful")
+        return True
+    except Exception as e:
+        logging.error(f"Login failed: {e}")
+        return False
+
+def navigate_to_jpegs(driver):
+    """Navigate to the Jpegs Unnamed section."""
+    try:
+        logging.info("Navigating to Jpegs Unnamed...")
+        
+        # Click Reports
+        reports = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "asm-menu-reports"))
+        )
+        reports.click()
+        time.sleep(0.3)  # Reduced for menu click
+
+        # Click Media submenu
+        media = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "ui-id-15"))
+        )
+        media.click()
+        time.sleep(0.3)  # Reduced for menu click
+
+        # Click Jpegs Unnamed
+        jpegs = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.LINK_TEXT, "Jpegs Unnamed"))
+        )
+        jpegs.click()
+        time.sleep(0.5)  # Keep slightly longer for page load
+        
+        # Verify we're on the correct page
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//table/tbody/tr"))
+        )
+        logging.info("Successfully navigated to Jpegs Unnamed")
+        return True
+    except Exception as e:
+        logging.error(f"Navigation failed: {e}")
+        return False
+
+def safe_click(driver, element, use_js=True):
+    """Safely click an element using either JavaScript or regular click."""
+    try:
+        # Scroll into view
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        time.sleep(0.2)  # Reduced scroll wait
+        
+        if use_js:
+            driver.execute_script("arguments[0].click();", element)
+        else:
+            element.click()
+        return True
+    except Exception as e:
+        logging.error(f"Click failed: {e}")
+        return False
+
+def close_dialog_if_open(driver):
+    """Try to close any open dialog."""
+    try:
+        cancel_buttons = driver.find_elements(
+            By.XPATH, 
+            "//button[contains(@class, 'ui-button') and (text()='Cancel' or text()='Close')]"
+        )
+        if cancel_buttons:
+            safe_click(driver, cancel_buttons[0])
+            time.sleep(0.3)  # Reduced dialog close wait
+    except Exception:
+        pass
+
+def rename_to_id(driver):
+    """Rename the current file to ID."""
+    try:
+        # Wait for the textarea
+        textarea = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "medianotes"))
+        )
+        
+        # Select all and type ID
+        textarea.send_keys(Keys.COMMAND + "a")  # Select all on Mac
+        time.sleep(0.2)  # Reduced wait after select all
+        textarea.send_keys("ID")
+        
+        # Click the Change button
+        change_button = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((
+                By.XPATH, 
+                "//button[contains(@class, 'asm-dialog-actionbutton') and text()='Change']"
+            ))
+        )
+        safe_click(driver, change_button)
+        time.sleep(0.5)  # Adjusted for change to complete
+        
+        # Wait for dialog to close
+        try:
+            WebDriverWait(driver, 3).until_not(
+                EC.presence_of_element_located((By.ID, "medianotes"))
+            )
+        except:
+            close_dialog_if_open(driver)
+        
+        time.sleep(0.2)  # Reduced final wait
+        return True
+    except Exception as e:
+        logging.error(f"Error renaming file: {e}")
+        close_dialog_if_open(driver)
+        return False
+
+def is_pdf_link(link):
+    """Check if the link is for a PDF file."""
+    try:
+        # Check multiple attributes for PDF indication
+        attributes_to_check = ['title', 'text', 'data-original-title']
+        for attr in attributes_to_check:
+            value = link.get_attribute(attr) or ''
+            if value.lower().endswith('.pdf'):
+                return True
+        return False
+    except:
+        return False
+
+def process_entries(driver):
+    """Interactive processing of entries."""
+    try:
+        continue_processing = True
+        current_entry_index = 0
+        
+        while continue_processing:
+            # Find entries
+            entries = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.XPATH, "//table/tbody/tr/td[2]/b/a"))
+            )
+            
+            if not entries:
+                print("No more entries found.")
+                break
+                
+            if current_entry_index >= len(entries):
+                print("Processed all entries.")
+                break
+            
+            # Get the current entry
+            entry = entries[current_entry_index]
+            entry_name = entry.text
+            
+            # Skip if it looks like an animal entry (typically single word names)
+            if len(entry_name.split()) == 1:
+                print(f"Skipping likely animal entry: {entry_name}")
+                current_entry_index += 1
+                continue
+            
+            # Click the entry
+            print(f"\nNavigating to entry {current_entry_index + 1} of {len(entries)}: {entry_name}")
+            if not safe_click(driver, entry):
+                print("Failed to click entry, trying next one...")
+                current_entry_index += 1
+                continue
+            time.sleep(0.5)  # Reduced wait after entry click
+            
+            # Find edit links (dates)
+            edit_links = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.link-edit[data-id]"))
+            )
+            
+            print(f"Found {len(edit_links)} items to process")
+            
+            for i, link in enumerate(edit_links):
+                # Skip PDFs automatically
+                if is_pdf_link(link):
+                    print(f"Skipping PDF file (item {i+1})")
+                    continue
+                
+                date_text = link.text or "No date"
+                print(f"\nProcessing item {i+1} of {len(edit_links)} (Date: {date_text})")
+                
+                if safe_click(driver, link):
+                    time.sleep(0.3)  # Reduced wait after link click
+                    action = wait_for_input()
+                    
+                    if action == "1":
+                        if rename_to_id(driver):
+                            print("Successfully renamed to ID")
+                            # Go back to list of names
+                            driver.back()
+                            time.sleep(0.5)  # Reduced wait after back navigation
+                            # Move to next name
+                            current_entry_index += 1
+                            break  # Exit the loop for this entry's items
+                        else:
+                            print("Failed to rename")
+                            close_dialog_if_open(driver)
+                    elif action == "2":
+                        print("Skipping this item")
+                        close_dialog_if_open(driver)
+                    elif action == "3":
+                        print("Moving to next entry")
+                        close_dialog_if_open(driver)
+                        current_entry_index += 1
+                        driver.back()
+                        time.sleep(0.5)  # Reduced wait after back navigation
+                        break  # Exit the loop for this entry's items
+                    elif action == "4":
+                        print("Quitting program")
+                        return
+                else:
+                    print(f"Failed to click item {i+1}")
+            
+            # Go back to list if we haven't already
+            if not action in ["1", "3"]:
+                driver.back()
+                time.sleep(0.5)  # Reduced wait after back navigation
+                current_entry_index += 1
+            
+            print("\nReady for next entry")
+                
+    except Exception as e:
+        logging.error(f"Error in process_entries: {e}")
+        print("\nAn error occurred. Press Enter to continue...")
+        input()
+
+def main():
+    driver = None
+    try:
+        # Setup
+        driver = setup_driver()
         username = os.getenv("USERNAME")
         password = os.getenv("PASSWORD")
 
-        login(driver, username, password)
+        if not username or not password:
+            raise ValueError("Username or password not found in environment variables")
 
-        WebDriverWait(driver, 10).until(
-            EC.url_contains("https://us10d.sheltermanager.com/main")
-        )
+        # Login and navigate
+        if not login(driver, username, password):
+            raise Exception("Login failed")
 
-        # Navigate to Jpegs Unnamed initially
-        navigate_to_jpegs_unnamed(driver)
+        if not navigate_to_jpegs(driver):
+            raise Exception("Navigation failed")
 
-        # Loop to repeat the process
-        while True:
-            # Prompt the user to continue or stop
-            user_input = input("Proceed to process the next item? (y/n): ").strip().lower()
-            if user_input != 'y':
-                logging.info("Stopping the process as per user request.")
-                break
+        # Start interactive processing
+        process_entries(driver)
 
-            # Click on the last entry in the list
-            if not click_last_entry(driver):
-                break  # If no entries are found, exit the loop
-
-            # Process the entry for a single JPEG
-            process_single_jpeg(driver)
-
-            # Go back to Jpegs Unnamed to start over
-            driver.back()
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_all_elements_located((By.XPATH, "//a[contains(@href, 'person_media?id=')]"))
-            )
-            time.sleep(3)
-
+    except Exception as e:
+        logging.error(f"Main process error: {e}")
+        print("\nAn error occurred. Press Enter to continue...")
+        input()
     finally:
-        driver.quit()
+        try:
+            if driver:
+                driver.quit()
+                logging.info("Browser closed successfully")
+        except Exception as e:
+            logging.error(f"Error closing browser: {e}")
 
 if __name__ == "__main__":
     main()
