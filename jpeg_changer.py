@@ -15,13 +15,13 @@ logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 def setup_driver():
-    """Set up and return the Chrome WebDriver."""
+    #Set up and return the Chrome WebDriver.
     options = webdriver.ChromeOptions()
     options.add_argument('--disable-gpu')
     return webdriver.Chrome(options=options)
 
 def wait_for_input():
-    """Wait for user input with clear prompt."""
+    #Wait for user input with clear prompt.
     print("\nWhat would you like to do?")
     print("1: Rename to ID (for driver's license JPGs)")
     print("2: Skip this item")
@@ -37,19 +37,19 @@ def wait_for_input():
             print("Invalid input, please try again")
 
 def login(driver, username, password):
-    """Log in to ShelterManager."""
+    #Log in to ShelterManager.
     try:
         logging.info("Attempting to log in...")
         driver.get("https://service.sheltermanager.com/asmlogin")
         time.sleep(0.5)
 
-        # Fill in login details
+        #Fill in login details
         driver.find_element(By.ID, "smaccount").send_keys('hsnba')
         driver.find_element(By.ID, "username").send_keys(username)
         driver.find_element(By.ID, "password").send_keys(password)
         driver.find_element(By.ID, "login").click()
         
-        # Wait for login to complete
+        #Wait for login to complete
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "asm-menu-reports"))
         )
@@ -60,32 +60,32 @@ def login(driver, username, password):
         return False
 
 def navigate_to_jpegs(driver):
-    """Navigate to the Jpegs Unnamed section."""
+    #Navigate to the Jpegs Unnamed section.
     try:
         logging.info("Navigating to Jpegs Unnamed...")
         
-        # Click Reports
+        #Click Reports
         reports = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, "asm-menu-reports"))
         )
         reports.click()
         time.sleep(0.3)
 
-        # Click Media submenu
+        #Click Media submenu
         media = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, "ui-id-15"))
         )
         media.click()
         time.sleep(0.3)
 
-        # Click Jpegs Unnamed
+        #click Jpegs Unnamed
         jpegs = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.LINK_TEXT, "Jpegs Unnamed"))
         )
         jpegs.click()
         time.sleep(0.5)
         
-        # Verify we're on the correct page
+        #Verify on the correct page
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, "//table/tbody/tr"))
         )
@@ -96,9 +96,9 @@ def navigate_to_jpegs(driver):
         return False
 
 def safe_click(driver, element, use_js=True):
-    """Safely click an element using either JavaScript or regular click."""
+    ### Safely click an element using either JavaScript or regular click.
     try:
-        # Scroll into view
+        #scroll into view
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
         time.sleep(0.2)
         
@@ -112,7 +112,7 @@ def safe_click(driver, element, use_js=True):
         return False
 
 def close_dialog_if_open(driver):
-    """Try to close any open dialog."""
+    #Try to close any open dialog.
     try:
         cancel_buttons = driver.find_elements(
             By.XPATH, 
@@ -125,11 +125,11 @@ def close_dialog_if_open(driver):
         pass
 
 def move_dialog_down(driver, pixels=300):
-    """Move the dialog box down by dragging the Edit media title."""
+    #Move the dialog box down by dragging the Edit media title.
     try:
         time.sleep(0.5)
         
-        # Find the "Edit media" title text specifically
+        #find "Edit media" title text 
         edit_media_title = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "ui-dialog-title"))
         )
@@ -160,18 +160,18 @@ def move_dialog_down(driver, pixels=300):
         return False
 
 def rename_to_id(driver):
-    """Rename the current file to ID."""
+    #Rename the current file to ID.
     try:
-        # Wait for the textarea
+        # Wait for textarea
         textarea = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "medianotes"))
         )
         
-        # Select all and type ID - no wait needed between these
+        #select all and type ID - no wait needed between these
         textarea.send_keys(Keys.COMMAND + "a")
         textarea.send_keys("ID")
         
-        # Click the Change button
+        #click the Change button
         change_button = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((
                 By.XPATH, 
@@ -179,7 +179,7 @@ def rename_to_id(driver):
             ))
         )
         safe_click(driver, change_button)
-        time.sleep(0.3)  # Brief wait for change to register
+        time.sleep(0.3)  # Brief wait for change
         
         # Go back immediately
         driver.back()
@@ -192,9 +192,9 @@ def rename_to_id(driver):
         return False
 
 def is_pdf_link(link):
-    """Check if the link is for a PDF file."""
+    #Check if the link is for a PDF file.
     try:
-        # Check multiple attributes for PDF indication
+        #Check multiple attributes for PDF indication
         attributes_to_check = ['title', 'text', 'data-original-title']
         for attr in attributes_to_check:
             value = link.get_attribute(attr) or ''
@@ -205,7 +205,7 @@ def is_pdf_link(link):
         return False
 
 def process_entries(driver):
-    """Interactive processing of entries."""
+    #Interactive processing of entries.
     try:
         continue_processing = True
         current_entry_index = 0
@@ -224,17 +224,17 @@ def process_entries(driver):
                 print("Processed all entries.")
                 break
             
-            # Get the current entry
+            #get the current entry 
             entry = entries[current_entry_index]
             entry_name = entry.text
             
-            # Skip if it looks like an animal entry (typically single word names)
+            #skip if it looks like an animal entry (typically single word names)
             if len(entry_name.split()) == 1:
                 print(f"Skipping likely animal entry: {entry_name}")
                 current_entry_index += 1
                 continue
             
-            # Click the entry
+            #click the entry
             print(f"\nNavigating to entry {current_entry_index + 1} of {len(entries)}: {entry_name}")
             if not safe_click(driver, entry):
                 print("Failed to click entry, trying next one...")
@@ -242,7 +242,7 @@ def process_entries(driver):
                 continue
             time.sleep(0.3)
             
-            # Find edit links (dates)
+            #find edit links (dates)
             edit_links = WebDriverWait(driver, 10).until(
                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.link-edit[data-id]"))
             )
@@ -250,7 +250,7 @@ def process_entries(driver):
             print(f"Found {len(edit_links)} items to process")
             
             for i, link in enumerate(edit_links):
-                # Skip PDFs automatically
+                #skip PDFs automatically
                 if is_pdf_link(link):
                     print(f"Skipping PDF file (item {i+1})")
                     continue
@@ -258,8 +258,11 @@ def process_entries(driver):
                 date_text = link.text or "No date"
                 print(f"\nProcessing item {i+1} of {len(edit_links)} (Date: {date_text})")
                 
+                # add delay BEFORE clicking the link
+                time.sleep(2)
+                
                 if safe_click(driver, link):
-                    time.sleep(2)  # Increased wait time to 2 seconds after clicking link
+                    time.sleep(0.3)
                     action = wait_for_input()
                     
                     if action == "1":
@@ -286,7 +289,7 @@ def process_entries(driver):
                 else:
                     print(f"Failed to click item {i+1}")
             
-            # Go back to list if we haven't already (if we skipped all items)
+            #go back to list if we haven't already (if we skipped all items)
             if not action in ["1", "3"]:
                 driver.back()
                 time.sleep(0.3)
@@ -310,14 +313,14 @@ def main():
         if not username or not password:
             raise ValueError("Username or password not found in environment variables")
 
-        # Login and navigate
+        #login and navigate
         if not login(driver, username, password):
             raise Exception("Login failed")
 
         if not navigate_to_jpegs(driver):
             raise Exception("Navigation failed")
 
-        # Start interactive processing
+        #start interactive processing
         process_entries(driver)
 
     except Exception as e:
