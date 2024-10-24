@@ -41,7 +41,7 @@ def login(driver, username, password):
     try:
         logging.info("Attempting to log in...")
         driver.get("https://service.sheltermanager.com/asmlogin")
-        time.sleep(0.5)  # Reduced wait after page load
+        time.sleep(0.5)
 
         # Fill in login details
         driver.find_element(By.ID, "smaccount").send_keys('hsnba')
@@ -49,7 +49,7 @@ def login(driver, username, password):
         driver.find_element(By.ID, "password").send_keys(password)
         driver.find_element(By.ID, "login").click()
         
-        # Wait for login to complete (keep this at 10 as it's network dependent)
+        # Wait for login to complete
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "asm-menu-reports"))
         )
@@ -69,21 +69,21 @@ def navigate_to_jpegs(driver):
             EC.element_to_be_clickable((By.ID, "asm-menu-reports"))
         )
         reports.click()
-        time.sleep(0.3)  # Reduced for menu click
+        time.sleep(0.3)
 
         # Click Media submenu
         media = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, "ui-id-15"))
         )
         media.click()
-        time.sleep(0.3)  # Reduced for menu click
+        time.sleep(0.3)
 
         # Click Jpegs Unnamed
         jpegs = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.LINK_TEXT, "Jpegs Unnamed"))
         )
         jpegs.click()
-        time.sleep(0.5)  # Keep slightly longer for page load
+        time.sleep(0.5)
         
         # Verify we're on the correct page
         WebDriverWait(driver, 10).until(
@@ -100,7 +100,7 @@ def safe_click(driver, element, use_js=True):
     try:
         # Scroll into view
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-        time.sleep(0.2)  # Reduced scroll wait
+        time.sleep(0.2)
         
         if use_js:
             driver.execute_script("arguments[0].click();", element)
@@ -120,9 +120,44 @@ def close_dialog_if_open(driver):
         )
         if cancel_buttons:
             safe_click(driver, cancel_buttons[0])
-            time.sleep(0.3)  # Reduced dialog close wait
+            time.sleep(0.3)
     except Exception:
         pass
+
+def move_dialog_down(driver, pixels=300):
+    """Move the dialog box down by dragging the Edit media title."""
+    try:
+        time.sleep(0.5)
+        
+        # Find the "Edit media" title text specifically
+        edit_media_title = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "ui-dialog-title"))
+        )
+        
+        print("Found Edit media title, attempting to drag...")
+        
+        actions = ActionChains(driver)
+        # Move to the exact title element
+        actions.move_to_element(edit_media_title)
+        # Pause briefly to simulate human hover
+        actions.pause(0.5)
+        # Click and hold left mouse button
+        actions.click_and_hold()
+        # Pause briefly to simulate human holding
+        actions.pause(0.5)
+        # Move straight down
+        actions.move_by_offset(0, pixels)
+        # Release mouse button
+        actions.release()
+        # Execute the action sequence
+        actions.perform()
+        
+        print("Drag action completed")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Failed to move dialog with error: {str(e)}")
+        return False
 
 def rename_to_id(driver):
     """Rename the current file to ID."""
@@ -132,9 +167,8 @@ def rename_to_id(driver):
             EC.presence_of_element_located((By.ID, "medianotes"))
         )
         
-        # Select all and type ID
-        textarea.send_keys(Keys.COMMAND + "a")  # Select all on Mac
-        time.sleep(0.2)  # Reduced wait after select all
+        # Select all and type ID - no wait needed between these
+        textarea.send_keys(Keys.COMMAND + "a")
         textarea.send_keys("ID")
         
         # Click the Change button
@@ -145,17 +179,12 @@ def rename_to_id(driver):
             ))
         )
         safe_click(driver, change_button)
-        time.sleep(0.5)  # Adjusted for change to complete
+        time.sleep(0.3)  # Brief wait for change to register
         
-        # Wait for dialog to close
-        try:
-            WebDriverWait(driver, 3).until_not(
-                EC.presence_of_element_located((By.ID, "medianotes"))
-            )
-        except:
-            close_dialog_if_open(driver)
+        # Go back immediately
+        driver.back()
+        time.sleep(0.3)
         
-        time.sleep(0.2)  # Reduced final wait
         return True
     except Exception as e:
         logging.error(f"Error renaming file: {e}")
@@ -211,7 +240,7 @@ def process_entries(driver):
                 print("Failed to click entry, trying next one...")
                 current_entry_index += 1
                 continue
-            time.sleep(0.5)  # Reduced wait after entry click
+            time.sleep(0.3)
             
             # Find edit links (dates)
             edit_links = WebDriverWait(driver, 10).until(
@@ -230,16 +259,12 @@ def process_entries(driver):
                 print(f"\nProcessing item {i+1} of {len(edit_links)} (Date: {date_text})")
                 
                 if safe_click(driver, link):
-                    time.sleep(0.3)  # Reduced wait after link click
+                    time.sleep(2)  # Increased wait time to 2 seconds after clicking link
                     action = wait_for_input()
                     
                     if action == "1":
                         if rename_to_id(driver):
                             print("Successfully renamed to ID")
-                            # Go back to list of names
-                            driver.back()
-                            time.sleep(0.5)  # Reduced wait after back navigation
-                            # Move to next name
                             current_entry_index += 1
                             break  # Exit the loop for this entry's items
                         else:
@@ -253,7 +278,7 @@ def process_entries(driver):
                         close_dialog_if_open(driver)
                         current_entry_index += 1
                         driver.back()
-                        time.sleep(0.5)  # Reduced wait after back navigation
+                        time.sleep(0.3)
                         break  # Exit the loop for this entry's items
                     elif action == "4":
                         print("Quitting program")
@@ -261,10 +286,10 @@ def process_entries(driver):
                 else:
                     print(f"Failed to click item {i+1}")
             
-            # Go back to list if we haven't already
+            # Go back to list if we haven't already (if we skipped all items)
             if not action in ["1", "3"]:
                 driver.back()
-                time.sleep(0.5)  # Reduced wait after back navigation
+                time.sleep(0.3)
                 current_entry_index += 1
             
             print("\nReady for next entry")
