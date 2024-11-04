@@ -192,14 +192,16 @@ def rename_to_id(driver):
         return False
 
 def is_pdf_link(link):
-    #Check if the link is for a PDF file.
+    #check if link is pdf vs normal image
     try:
-        #Check multiple attributes for PDF indication
-        attributes_to_check = ['title', 'text', 'data-original-title']
-        for attr in attributes_to_check:
-            value = link.get_attribute(attr) or ''
-            if value.lower().endswith('.pdf'):
-                return True
+        #get parent and find thumbnail
+        parent = link.find_element(By.XPATH, "./..")
+        img = parent.find_element(By.CLASS_NAME, "asm-thumbnail")
+        src = img.get_attribute("src")
+        
+        #check for pdf icon or if not a regular image
+        if "pdf-media.png" in src or "mode=media" not in src:
+            return True
         return False
     except:
         return False
