@@ -23,7 +23,7 @@ def login(driver, username, password):
     try:
         logging.info("Attempting to log in...")
         driver.get("https://service.sheltermanager.com/asmlogin")
-        time.sleep(0.5)
+        time.sleep(1)
 
         # Fill in login details
         driver.find_element(By.ID, "smaccount").send_keys('hsnba')
@@ -50,14 +50,14 @@ def navigate_to_old_movements(driver):
             EC.element_to_be_clickable((By.ID, "asm-menu-reports"))
         )
         reports.click()
-        time.sleep(0.3)
+        time.sleep(1)
 
         # Click Media submenu
         media = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, "ui-id-15"))
         )
         media.click()
-        time.sleep(0.3)
+        time.sleep(1)
 
         # Click Old Movements link
         try:
@@ -70,7 +70,7 @@ def navigate_to_old_movements(driver):
             )
         
         old_movements.click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         logging.info("Successfully navigated to Old Movements")
         return True
@@ -78,33 +78,11 @@ def navigate_to_old_movements(driver):
     except Exception as e:
         logging.error(f"Navigation failed: {e}")
         print(f"\nNavigation error: {e}")
-        print("Press Enter to exit...")
-        input()
         return False
 
-def click_first_entry(driver):
+def check_movement_type(driver):
     try:
-        logging.info("Attempting to click first entry...")
-        
-        # Wait for entries to load and click first one
-        first_entry = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "a[href^='animal_movements?id=']"))
-        )
-        
-        print(f"Clicking on entry: {first_entry.text}")
-        first_entry.click()
-        time.sleep(0.5)
-        
-        logging.info("Successfully clicked first entry")
-        return True
-        
-    except Exception as e:
-        logging.error(f"Failed to click first entry: {e}")
-        return False
-
-def click_offsite_adoption(driver):
-    try:
-        logging.info("Looking for Offsite Adoption link...")
+        logging.info("Looking for movement links...")
         
         # Wait for movement links to be present
         WebDriverWait(driver, 10).until(
@@ -114,26 +92,38 @@ def click_offsite_adoption(driver):
         # Find all movement links
         movement_links = driver.find_elements(By.CSS_SELECTOR, "a.link-edit")
         
-        # Look specifically for "Offsite Adoption"
+        # Look for both types
         offsite_link = None
+        working_cat_link = None
+        
         for link in movement_links:
-            if link.text.strip() == "Offsite Adoption":
+            text = link.text.strip()
+            if text == "Offsite Adoption":
                 offsite_link = link
+                break
+            elif text == "Working Cat":
+                working_cat_link = link
                 break
                 
         if offsite_link:
             print("Found Offsite Adoption link, clicking...")
             offsite_link.click()
-            time.sleep(0.5)
+            time.sleep(1)
             logging.info("Successfully clicked Offsite Adoption")
-            return True
+            return "offsite"
+        elif working_cat_link:
+            print("Found Working Cat link, clicking...")
+            working_cat_link.click()
+            time.sleep(1)
+            logging.info("Successfully clicked Working Cat")
+            return "working_cat"
         else:
-            print("No Offsite Adoption link found")
-            return False
+            print("No relevant movement type found")
+            return None
             
     except Exception as e:
-        logging.error(f"Failed to click Offsite Adoption: {e}")
-        return False
+        logging.error(f"Failed to check movement type: {e}")
+        return None
 
 def change_movement_type(driver):
     try:
@@ -147,7 +137,7 @@ def change_movement_type(driver):
         # Create Select object and select by value
         select = Select(movement_select)
         select.select_by_value("1")  # "1" is the value for Adoption
-        time.sleep(0.5)
+        time.sleep(1)
         
         logging.info("Successfully changed movement type to Adoption")
         return True
@@ -175,28 +165,66 @@ def check_offsite_and_save(driver):
         if not checkbox.is_selected():
             print("Checking Offsite Adoption checkbox...")
             checkbox.click()
-            time.sleep(0.5)
+            time.sleep(1)
         else:
             print("Checkbox was already checked")
             
-        # Click the Change button with more specific selector
+        # Click the Change button
         print("Clicking Change button...")
         change_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, 
                 "//button[contains(@class, 'asm-dialog-actionbutton') and text()='Change']"))
         )
         change_button.click()
-        time.sleep(1)  # Increased wait time after clicking
+        time.sleep(2)
         
         logging.info("Successfully checked box and clicked Change")
-        print("Changes saved - press Enter to exit")
-        input()
         return True
         
     except Exception as e:
         logging.error(f"Failed to handle checkbox and save: {e}")
-        print("\nError with checkbox/save. Press Enter to exit...")
-        input()
+        return False
+
+def handle_working_cat_flags(driver):
+    try:
+        print("Clicking on Animal tab...")
+        animal_tab = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "a.ui-tabs-anchor[href^='animal?id=']"))
+        )
+        animal_tab.click()
+        time.sleep(2)
+
+        # Find the flags dropdown
+        print("Looking for flags dropdown...")
+        flags_select = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "asmSelect"))
+        )
+        select = Select(flags_select)
+        
+        # Add Feral flag
+        print("Adding Feral flag...")
+        select.select_by_value("Feral")
+        time.sleep(1)
+        
+        # Add Working Cat flag
+        print("Adding Working Cat flag...")
+        select.select_by_value("Working Cat")
+        time.sleep(1)
+        
+        # Click Save button
+        print("Clicking Save button...")
+        save_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "button-save"))
+        )
+        save_button.click()
+        time.sleep(2)
+        
+        print("Successfully updated animal flags")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Failed to handle working cat flags: {e}")
+        print(f"Error details: {e}")  # Added more detailed error printing
         return False
 
 def process_all_entries(driver):
@@ -205,7 +233,7 @@ def process_all_entries(driver):
         while True:
             print("\n" + "="*50)
             print("Looking for all entries...")
-            time.sleep(0.5)  # Reduced from 2
+            time.sleep(1)
             
             # Wait for all entries to load
             entries = WebDriverWait(driver, 10).until(
@@ -221,93 +249,98 @@ def process_all_entries(driver):
             entry = entries[current_entry]
             print(f"\nProcessing entry {current_entry + 1} of {len(entries)}")
             print(f"Entry name: {entry.text}")
-            print("Clicking entry...")
-            time.sleep(0.3)  # Reduced from 3
+            time.sleep(1)
             
             # Click the entry
             entry.click()
-            print("Clicked entry...")
-            time.sleep(0.5)  # Reduced from 3
+            time.sleep(1)
             
-            # Process the entry
-            print("\nLooking for Offsite Adoption link...")
-            if not click_offsite_adoption(driver):
-                print("No Offsite Adoption found for this entry, skipping...")
+            # Check what type of movement it is
+            movement_type = check_movement_type(driver)
+            
+            if movement_type is None:
+                print("No relevant movement found, skipping...")
                 print("Going back to list...")
                 driver.back()
-                time.sleep(0.5)  # Reduced from 3
+                time.sleep(1)
                 current_entry += 1
                 continue
                 
-            print("\nChanging movement type...")
-            time.sleep(0.5)  # Reduced from 2
-            if not change_movement_type(driver):
-                print("Failed to change movement type, skipping...")
-                print("Going back to list...")
-                driver.back()
-                time.sleep(0.5)
-                current_entry += 1
-                continue
+            if movement_type == "offsite":
+                # Handle Offsite Adoption
+                print("\nHandling Offsite Adoption...")
+                if not change_movement_type(driver):
+                    print("Failed to change movement type, skipping...")
+                    print("Going back to list...")
+                    driver.back()
+                    time.sleep(1)
+                    current_entry += 1
+                    continue
+                    
+                if not check_offsite_and_save(driver):
+                    print("Failed to save changes, skipping...")
+                    print("Going back to list...")
+                    driver.back()
+                    time.sleep(1)
+                    current_entry += 1
+                    continue
+                    
+            elif movement_type == "working_cat":
+                print("\nHandling Working Cat...")
+                # Change movement type to Adoption
+                if not change_movement_type(driver):
+                    print("Failed to change movement type, skipping...")
+                    print("Going back to list...")
+                    driver.back()
+                    time.sleep(1)
+                    current_entry += 1
+                    continue
                 
-            print("\nChecking box and saving...")
-            time.sleep(0.5)  # Reduced from 1.5
-            if not check_offsite_and_save(driver):
-                print("Failed to save changes, skipping...")
+                # Click Change button (without checking the Offsite Adoption box)
+                print("Clicking Change button...")
+                try:
+                    change_button = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.XPATH, 
+                            "//button[contains(@class, 'asm-dialog-actionbutton') and text()='Change']"))
+                    )
+                    change_button.click()
+                    time.sleep(2)
+                    print("Successfully saved movement type change")
+                    
+                    # Handle the flags
+                    if not handle_working_cat_flags(driver):
+                        print("Failed to update animal flags, skipping...")
+                        driver.back()
+                        time.sleep(1)
+                        current_entry += 1
+                        continue
+                    
+                    # Go back twice after handling flags
+                    print("Going back to movement page...")
+                    driver.back()
+                    time.sleep(1)
+                    print("Going back to list...")
+                    driver.back()
+                    time.sleep(1)
+                        
+                except Exception as e:
+                    print(f"Failed to process Working Cat: {e}")
+                    driver.back()
+                    time.sleep(1)
+                    current_entry += 1
+                    continue
+            else:
+                # After successful processing of non-Working Cat entries
+                print("\nSuccessfully processed entry.")
                 print("Going back to list...")
                 driver.back()
-                time.sleep(0.5)
-                current_entry += 1
-                continue
+                time.sleep(1)
             
-            # After successful processing
-            print("\nSuccessfully processed entry.")
-            print("Going back to list...")
-            driver.back()
-            time.sleep(0.5)  # Reduced from 1
             current_entry += 1
                 
     except Exception as e:
         logging.error(f"Error in process_all_entries: {e}")
         print(f"\nError processing entries: {e}")
-        return False
-
-def check_offsite_and_save(driver):
-    try:
-        logging.info("Looking for Offsite Adoption checkbox...")
-        
-        # Find the label first
-        label = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//label[contains(text(), 'Was this an Offsite Adoption?')]"))
-        )
-        
-        # Get the 'for' attribute to find the associated checkbox
-        checkbox_id = label.get_attribute('for')
-        
-        # Find and click the checkbox
-        checkbox = driver.find_element(By.ID, checkbox_id)
-        
-        # Only click if it's not currently checked
-        if not checkbox.is_selected():
-            print("Checking Offsite Adoption checkbox...")
-            checkbox.click()
-            time.sleep(0.3)  # Reduced from 0.5
-        else:
-            print("Checkbox was already checked")
-            
-        # Click the Change button with more specific selector
-        print("Clicking Change button...")
-        change_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, 
-                "//button[contains(@class, 'asm-dialog-actionbutton') and text()='Change']"))
-        )
-        change_button.click()
-        time.sleep(1)  # Keep this at 1 second to ensure change is processed
-        
-        logging.info("Successfully checked box and clicked Change")
-        return True
-        
-    except Exception as e:
-        logging.error(f"Failed to handle checkbox and save: {e}")
         return False
 
 def main():
