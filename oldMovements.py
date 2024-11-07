@@ -200,18 +200,35 @@ def handle_working_cat_flags(driver):
             EC.presence_of_element_located((By.CLASS_NAME, "asmSelect"))
         )
         select = Select(flags_select)
+
+        # Get all selected options
+        selected_values = [option.get_attribute('value') for option in select.all_selected_options]
         
-        # Add Feral flag
-        print("Adding Feral flag...")
-        select.select_by_value("Feral")
-        time.sleep(1)
+        # Add Feral flag if not already selected
+        print("Checking Feral flag...")
+        if "Feral" not in selected_values:
+            print("Adding Feral flag...")
+            try:
+                select.select_by_value("Feral")
+                time.sleep(1)
+            except Exception as e:
+                print(f"Note: Could not add Feral flag: {e}")
+        else:
+            print("Feral flag already selected")
         
-        # Add Working Cat flag
-        print("Adding Working Cat flag...")
-        select.select_by_value("Working Cat")
-        time.sleep(1)
+        # Add Working Cat flag if not already selected
+        print("Checking Working Cat flag...")
+        if "Working Cat" not in selected_values:
+            print("Adding Working Cat flag...")
+            try:
+                select.select_by_value("Working Cat")
+                time.sleep(1)
+            except Exception as e:
+                print(f"Note: Could not add Working Cat flag: {e}")
+        else:
+            print("Working Cat flag already selected")
         
-        # Click Save button
+        # Click Save button regardless of whether changes were made
         print("Clicking Save button...")
         save_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, "button-save"))
@@ -219,12 +236,12 @@ def handle_working_cat_flags(driver):
         save_button.click()
         time.sleep(2)
         
-        print("Successfully updated animal flags")
+        print("Successfully processed animal flags")
         return True
         
     except Exception as e:
         logging.error(f"Failed to handle working cat flags: {e}")
-        print(f"Error details: {e}")  # Added more detailed error printing
+        print(f"Error details: {e}")
         return False
 
 def process_all_entries(driver):
