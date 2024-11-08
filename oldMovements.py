@@ -204,32 +204,52 @@ def handle_working_cat_flags(driver):
         # Get all selected options
         selected_values = [option.get_attribute('value') for option in select.all_selected_options]
         
-        # Add Feral flag if not already selected
-        print("Checking Feral flag...")
-        if "Feral" not in selected_values:
-            print("Adding Feral flag...")
+        # Check current status of flags
+        feral_selected = "Feral" in selected_values
+        working_cat_selected = "Working Cat" in selected_values
+
+        # Log the current status
+        print("\nCurrent flag status:")
+        print(f"Feral flag: {'Already selected' if feral_selected else 'Not selected'}")
+        print(f"Working Cat flag: {'Already selected' if working_cat_selected else 'Not selected'}")
+
+        # Handle all possible cases
+        if feral_selected and working_cat_selected:
+            print("Both flags are already selected - no changes needed")
+        elif feral_selected:
+            print("Only Feral flag is selected - adding Working Cat flag...")
+            try:
+                select.select_by_value("Working Cat")
+                time.sleep(1)
+            except Exception as e:
+                print(f"Note: Could not add Working Cat flag: {e}")
+        elif working_cat_selected:
+            print("Only Working Cat flag is selected - adding Feral flag...")
             try:
                 select.select_by_value("Feral")
                 time.sleep(1)
             except Exception as e:
                 print(f"Note: Could not add Feral flag: {e}")
         else:
-            print("Feral flag already selected")
-        
-        # Add Working Cat flag if not already selected
-        print("Checking Working Cat flag...")
-        if "Working Cat" not in selected_values:
-            print("Adding Working Cat flag...")
+            print("Neither flag is selected - adding both flags...")
             try:
+                print("Adding Feral flag...")
+                select.select_by_value("Feral")
+                time.sleep(1)
+                print("Adding Working Cat flag...")
                 select.select_by_value("Working Cat")
                 time.sleep(1)
             except Exception as e:
-                print(f"Note: Could not add Working Cat flag: {e}")
-        else:
-            print("Working Cat flag already selected")
+                print(f"Note: Could not add flags: {e}")
+
+        # Verify final state
+        final_values = [option.get_attribute('value') for option in select.all_selected_options]
+        print("\nFinal flag status:")
+        print(f"Feral flag: {'Selected' if 'Feral' in final_values else 'Not selected'}")
+        print(f"Working Cat flag: {'Selected' if 'Working Cat' in final_values else 'Not selected'}")
         
         # Click Save button regardless of whether changes were made
-        print("Clicking Save button...")
+        print("\nClicking Save button...")
         save_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, "button-save"))
         )
@@ -313,42 +333,27 @@ def process_all_entries(driver):
                     current_entry += 1
                     continue
                 
-                # Click Change button (without checking the Offsite Adoption box)
-                print("Clicking Change button...")
-                try:
-                    change_button = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.XPATH, 
-                            "//button[contains(@class, 'asm-dialog-actionbutton') and text()='Change']"))
-                    )
-                    change_button.click()
-                    time.sleep(2)
-                    print("Successfully saved movement type change")
-                    
-                    # Handle the flags
-                    if not handle_working_cat_flags(driver):
-                        print("Failed to update animal flags, skipping...")
-                        driver.back()
-                        time.sleep(1)
-                        current_entry += 1
-                        continue
-                    
-                    # Go back twice after handling flags
-                    print("Going back to movement page...")
-                    driver.back()
-                    time.sleep(1)
+                # Check the Offsite Adoption box and save
+                if not check_offsite_and_save(driver):
+                    print("Failed to save changes, skipping...")
                     print("Going back to list...")
-                    driver.back()
-                    time.sleep(1)
-                        
-                except Exception as e:
-                    print(f"Failed to process Working Cat: {e}")
                     driver.back()
                     time.sleep(1)
                     current_entry += 1
                     continue
-            else:
-                # After successful processing of non-Working Cat entries
-                print("\nSuccessfully processed entry.")
+                
+                # Handle the flags
+                if not handle_working_cat_flags(driver):
+                    print("Failed to update animal flags, skipping...")
+                    driver.back()
+                    time.sleep(1)
+                    current_entry += 1
+                    continue
+                
+                # Go back twice after handling flags
+                print("Going back to movement page...")
+                driver.back()
+                time.sleep(1)
                 print("Going back to list...")
                 driver.back()
                 time.sleep(1)
