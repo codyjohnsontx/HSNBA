@@ -42,7 +42,7 @@ def login(driver, username, password):
         return False
 
 # def navigate_to_jpegs(driver):
-#     #Navigate to the Jpegs Unnamed section.
+
 #     try:
 #         logging.info("Navigating to Jpegs Unnamed...")
         
