@@ -1,2 +1,5 @@
 # Ignore the .env file
 .env
+
+# Local virtual environment
+.venv/

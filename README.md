@@ -1,14 +1,25 @@
 # HSNBA Maintenance Automation
 
-This project automates tasks on the ShelterManager website using Selenium, a web automation framework for Python. The scripts log into the ShelterManager system, navigate through the menus to access reports, and perform various automated maintenance tasks to reduce manual data entry and streamline operations.
+Volunteer automation for the Humane Society of New Braunfels Area (HSNBA): Python and Selenium scripts that clean up records in the shelter's ShelterManager back office.
+
+The scripts log into the ShelterManager system, navigate through the menus to access reports, and perform various automated maintenance tasks to reduce manual data entry and streamline operations.
+
+## What was built
+
+- **Selenium browser automation** against ShelterManager, a browser-based cloud app. Each script logs in with credentials from a `.env` file, opens a ShelterManager report, and works through the records it lists.
+- **Two report-driven cleanup jobs:**
+  - `jpeg_changer.py` drives the "Jpegs Unnamed" report and labels unnamed JPEGs (such as driver's license photos) as "ID", with an interactive prompt per image (rename, skip, next entry, quit).
+  - `oldMovements.py` drives the "Old Movements to Get Rid Of" report and corrects "Offsite Adoption" and "Working Cat" movements to Adoption.
+- **Idempotent state checks** that read the current record before writing to it: the Offsite Adoption checkbox is only clicked if it is not already checked, the Feral and Working Cat flags are only added if missing, and PDFs and likely animal entries are skipped in the JPEG report, so a record that is already correct is left alone and a rerun does not double-apply a change.
+- **Logging and error handling** with Python's `logging` module: login, navigation, and movement-change steps are logged with timestamps, and a step that fails on one record is logged and that record is skipped instead of stopping the run.
 
 ## Scripts
 
 ### 1. JPEG Maintenance (jpeg_changer.py)
 This script automates the maintenance of unnamed JPEGs in the system by:
 - Navigating to the "Jpegs Unnamed" report
-- Processing each entry to rename images based on specific criteria (ID, Investigation Photos, Rabies Certs, etc.)
-- Providing interactive options for handling different types of entries
+- Skipping PDFs and likely animal entries
+- Prompting for each image: rename it to "ID" (for driver's license JPGs), skip it, move to the next entry, or quit
 
 ### 2. Movement Records Maintenance (oldMovements.py)
 This script automates the maintenance of old movement records by:
@@ -20,6 +31,7 @@ This script automates the maintenance of old movement records by:
   - Saves changes
 - For Working Cat entries:
   - Changes movement type to Adoption
+  - Marks the "Was this an Offsite Adoption?" checkbox and saves
   - Navigates to the animal's record
   - Adds both "Feral" and "Working Cat" flags
   - Saves all changes
@@ -47,13 +59,13 @@ Both scripts include comprehensive error handling, logging, and progress trackin
 ## Installation
 1. **Clone the repository**:
 ```bash
-git clone https://github.com/your-username/sheltermanager-maintenance.git
-cd sheltermanager-maintenance
+git clone https://github.com/codyjohnsontx/HSNBA.git
+cd HSNBA
 ```
 
 2. **Install required packages**:
 ```bash
-pip install -r requirements.txt
+pip install selenium python-dotenv
 ```
 
 3. **Set up environment variables**:
