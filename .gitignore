@@ -3,3 +3,6 @@
 
 # Local virtual environment
 .venv/
+
+# Local run logs
+*.log
