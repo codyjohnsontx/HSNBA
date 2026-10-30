@@ -8,9 +8,9 @@ The scripts log into the ShelterManager system, navigate through the menus to ac
 
 - **Selenium browser automation** against ShelterManager, a browser-based cloud app. Each script logs in with credentials from a `.env` file, opens a ShelterManager report, and works through the records it lists.
 - **Two report-driven cleanup jobs:**
-  - `jpeg_changer.py` drives the "Jpegs Unnamed" report and labels unnamed JPEGs (such as driver's license photos) as "ID", with an interactive prompt per image (rename, skip, next entry, quit).
+  - `jpeg_changer.py` drives the "Jpegs Unnamed" report and labels unnamed JPEGs (such as driver's license photos) as "ID", skipping PDFs and likely animal entries, with an interactive prompt per image (rename, skip, next entry, quit).
   - `oldMovements.py` drives the "Old Movements to Get Rid Of" report and corrects "Offsite Adoption" and "Working Cat" movements to Adoption.
-- **Idempotent state checks** that read the current record before writing to it: the Offsite Adoption checkbox is only clicked if it is not already checked, the Feral and Working Cat flags are only added if missing, and PDFs and likely animal entries are skipped in the JPEG report, so a record that is already correct is left alone and a rerun does not double-apply a change.
+- **Idempotent state checks** that read the current record before writing to it: the Offsite Adoption checkbox is only clicked if it is not already checked, the Feral and Working Cat flags are only added if missing, and a corrected movement no longer shows up as an Offsite Adoption or Working Cat link in the report, so a record that is already correct is left alone and a rerun does not double-apply a change.
 - **Logging and error handling** with Python's `logging` module: login, navigation, and movement-change steps are logged with timestamps, and a step that fails on one record is logged and that record is skipped instead of stopping the run.
 
 ## Scripts
